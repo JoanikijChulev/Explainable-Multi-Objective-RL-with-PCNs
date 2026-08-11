@@ -431,33 +431,6 @@ pcn_reward_vs_reward_horizon_comparison/comparison_output_artifacts/
 +-- <prefix>_comparison/
 ~~~
 
-## Complete CLI index
-
-Run `--help` for current defaults and every optional budget flag.
-
-| Working directory | Command | Purpose |
-| --- | --- | --- |
-| Root | `python main_pcn.py --help` | Train, warm-start, or resume a reward-conditioned PCN. |
-| Root | `python eval_pcn.py --help` | Evaluate logged Pareto commands. |
-| Root | `python render_pcn.py --help` | Render logged policy rollouts. |
-| Root | `python custom_run_pcn.py --help` | Render a custom desired-return command. |
-| Root | `python interactive_pcn_zoo_cf.py` | Run prompt-driven CF-ZOO. |
-| Root | `python interactive_pcn_cw.py` | Run prompt-driven C&W. |
-| Root | `python evaluate_pcn_zoo_counterfactuals.py --help` | Run a batch CF-ZOO study. |
-| Root | `python diagnose_zoo_failures.py --help` | Diagnose unsuccessful ZOO cases on command grids. |
-| Root | `python evaluate_cw_vs_zoo_paper_experiments.py --help` | Run paired C&W/ZOO experiments. |
-| Root | `python generate_showcase_landscapes.py --help` | Generate selected command-space landscapes. |
-| Root | `python goal_influence/goal_influence.py --help` | Explain one or more logged policies. |
-| Root | `python -m goal_influence.goal_influence --help` | Equivalent package-style goal-influence invocation. |
-| Root | `python goal_influence/evaluate_goal_influence_envs.py --help` | Run configured cross-environment influence evaluation. |
-| Root | `python goal_influence/aggregate_goal_influence_results.py --help` | Aggregate a cross-environment influence study. |
-| Root | `python interactive_app/app.py [PORT]` | Launch the local application. |
-| Comparison | `python train_compare_pcn_variants.py --help` | Train and compare `R`/`RH` variants under a shared budget. |
-| Comparison | `python main_pcn.py --help` | Train or resume one comparison variant. |
-| Comparison | `python eval_pcn.py --help` | Evaluate a comparison run. |
-| Comparison | `python render_pcn.py --help` | Render a comparison run. |
-| Comparison | `python custom_run_pcn.py --help` | Run a custom `R` or `RH` command. |
-
 ## Operational checks
 
 After installation:
