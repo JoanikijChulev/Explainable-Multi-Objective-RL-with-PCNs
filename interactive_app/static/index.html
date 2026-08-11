@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CFZOO Rollout — PCN Counterfactual Playground</title>
+<style>
+  :root{
+    --bg:#0f1218; --panel:#171c26; --panel2:#1d2430; --line:#2a3342;
+    --text:#dfe6f0; --dim:#8b98ab; --acc:#4da3ff; --ok:#3ecf8e; --bad:#ff5d5d;
+    --warn:#f5b14d; --purple:#b48cff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 "Segoe UI",system-ui,sans-serif}
+  h1{font-size:20px;margin:0}
+  h2{font-size:15px;margin:0 0 10px;color:var(--acc);text-transform:uppercase;letter-spacing:.08em}
+  h3{font-size:14px;margin:12px 0 6px}
+  header{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--panel)}
+  header .chip{margin-left:auto}
+  main{max-width:1500px;margin:0 auto;padding:18px 22px 80px;display:flex;flex-direction:column;gap:18px}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  section.disabled{opacity:.45;pointer-events:none}
+  .chip{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;background:var(--panel2);border:1px solid var(--line);color:var(--dim)}
+  .chip.ok{color:var(--ok);border-color:var(--ok)}
+  .chip.bad{color:var(--bad);border-color:var(--bad)}
+  .chip.acc{color:var(--acc);border-color:var(--acc)}
+  .chip.warn{color:var(--warn);border-color:var(--warn)}
+  .chip.purple{color:var(--purple);border-color:var(--purple)}
+  button{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:7px 14px;cursor:pointer;font:inherit}
+  button:hover{border-color:var(--acc)}
+  button.primary{background:var(--acc);border-color:var(--acc);color:#06121f;font-weight:600}
+  button.green{background:var(--ok);border-color:var(--ok);color:#06121f;font-weight:600}
+  button.purple{background:var(--purple);border-color:var(--purple);color:#140a24;font-weight:600}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  input,select{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:5px 8px;font:inherit}
+  input[type=number]{width:110px}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left;white-space:nowrap}
+  th{color:var(--dim);font-weight:600}
+  tr.sel{background:rgba(77,163,255,.12)}
+  tr.clickable{cursor:pointer}
+  tr.clickable:hover{background:rgba(77,163,255,.07)}
+  .scroll{overflow:auto;max-height:320px;border:1px solid var(--line);border-radius:8px}
+  .scroll-x{overflow-x:auto}
+  code,.mono{font-family:Consolas,monospace;font-size:12.5px}
+  .grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+  .card{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:grab}
+  .card:active{cursor:grabbing}
+  .card .t{font-weight:600}
+  .card .d{color:var(--dim);font-size:12px;margin-top:4px}
+  .card .badges{margin-top:6px;display:flex;gap:6px;align-items:center}
+  .delbtn{margin-left:auto;padding:1px 8px;font-size:12px;border-color:var(--bad);color:var(--bad);border-radius:6px}
+  .delbtn:hover{background:var(--bad);color:#fff;border-color:var(--bad)}
+  #btnStop{background:var(--bad);border-color:var(--bad);color:#fff;font-weight:600}
+  #btnStop:hover{background:#d63c3c;border-color:#d63c3c}
+  /* simple-mode world cards: uniform, snug, rows always filled edge-to-edge */
+  #sWorlds{display:flex;flex-wrap:wrap;gap:10px}
+  .scard{display:flex;flex-direction:column;padding:9px 11px;flex:1 1 240px;min-width:240px}
+  .scard .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .scard .d{min-height:66px}
+  .scard img.sthumb{height:128px;width:100%;object-fit:contain;background:#0b0e14;margin-top:auto}
+  #dropzone{border:2px dashed var(--line);border-radius:12px;min-height:110px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:var(--dim);transition:all .15s;margin-top:14px}
+  #dropzone.over{border-color:var(--acc);background:rgba(77,163,255,.08);color:var(--acc)}
+  #dropzone.loaded{border-style:solid;border-color:var(--ok);color:var(--ok)}
+  .cols{display:flex;gap:18px;flex-wrap:wrap}
+  .cols>div{flex:1;min-width:320px}
+  #frame{max-width:100%;border-radius:10px;border:1px solid var(--line);background:#000;display:block}
+  .noframe{width:420px;height:320px;display:flex;align-items:center;justify-content:center;background:var(--panel2);border-radius:10px;color:var(--dim);text-align:center;padding:20px}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:2px 14px;font-size:13px}
+  .kv .k{color:var(--dim)}
+  .probbar{display:flex;align-items:center;gap:8px;margin:2px 0}
+  .probbar .lbl{width:120px;font-size:12.5px;overflow:hidden;text-overflow:ellipsis}
+  .probbar .bar{flex:1;height:12px;background:var(--panel2);border-radius:6px;overflow:hidden}
+  .probbar .fill{height:100%;background:var(--acc)}
+  .probbar.star .fill{background:var(--ok)}
+  .probbar.invalid{opacity:.35}
+  .probbar .val{width:52px;text-align:right;font-family:Consolas,monospace;font-size:12px}
+  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}
+  details{border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:8px 0;background:var(--panel2)}
+  summary{cursor:pointer;font-weight:600;color:var(--acc)}
+  details[open] summary{margin-bottom:8px}
+  .note{color:var(--dim);font-size:12.5px}
+  .settings-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px 14px;margin:10px 0}
+  .settings-grid label{display:flex;flex-direction:column;font-size:12px;color:var(--dim)}
+  .result-vec{font-family:Consolas,monospace;font-size:13px;background:var(--panel2);border-radius:6px;padding:2px 8px;display:inline-block}
+  .banner{border-radius:10px;padding:12px 16px;margin:10px 0;border:1px solid}
+  .banner.ok{border-color:var(--ok);background:rgba(62,207,142,.08)}
+  .banner.bad{border-color:var(--bad);background:rgba(255,93,93,.08)}
+  .banner.warn{border-color:var(--warn);background:rgba(245,177,77,.08)}
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--acc);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-3px;margin-right:8px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:flex-start;justify-content:center;padding:40px;z-index:50;overflow:auto}
+  #modal.show{display:flex}
+  #modal .box{background:var(--panel);border:1px solid var(--line);border-radius:14px;max-width:900px;padding:26px 30px}
+  #modal ol{padding-left:22px}
+  #modal li{margin:8px 0}
+  .hist{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+  .hist .h{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-size:11.5px;color:var(--dim)}
+  .hist .h.rw{border-color:var(--warn);color:var(--warn)}
+  .playwrap{margin-top:10px}
+  .stepinfo{font-size:12.5px;margin-top:6px}
+</style>
+</head>
+<body>
+<header style="position:relative;justify-content:center">
+  <h1 style="font-size:22px;text-align:center">Command-Space Counterfactual Explanations for Pareto-Conditioned Reinforcement Learning - Showcase</h1>
+  <span class="chip" id="modeSwitch" style="position:absolute;left:22px;top:50%;transform:translateY(-50%);cursor:pointer;display:none"></span>
+  <span class="chip acc" id="deviceChip" style="position:absolute;right:22px;top:50%;transform:translateY(-50%)"></span>
+</header>
+
+<!-- SIMPLE CF-ZOO EXPLAINER -->
+<div id="zooModal" class="modal-like" style="position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:flex-start;justify-content:center;padding:40px;z-index:60;overflow:auto">
+  <div class="box" style="background:var(--panel);border:1px solid var(--line);border-radius:14px;max-width:760px;padding:26px 30px">
+    <h1 style="margin-bottom:12px">How this works — in one minute</h1>
+    <div style="font-size:15px;line-height:1.7">
+      <p>🎯 <b>The agent follows a goal.</b> Its goal is a wish list: how much of each thing it should try to get (treasure, time, fuel, …). Give it a different wish list and it behaves differently — that's the whole trick.</p>
+      <p style="margin-top:10px">🤔 <b>When you ask "why not that move?"</b>, the method (called <b>CF-ZOO</b>) quietly asks the agent's brain tens of thousands of "what if" questions: <i>"if your wish list were slightly different — would you do it then?"</i> The world doesn't move at all during this; only the agent's brain is being questioned.</p>
+      <p style="margin-top:10px">⚖️ <b>It hunts for the smallest change of heart.</b> Out of all the wish lists that would make the agent take your move, it finds the one closest to the current goal. That's the answer you see: <i>"if it had cared a little less about D and a little more about A, it would have gone right."</i></p>
+      <p style="margin-top:10px">🚫 <b>Sometimes the answer is "never".</b> If no wish list at all makes the agent pick your move, that's not a failure — it tells you the move isn't part of <i>any</i> good strategy the agent knows from that situation.</p>
+      <p style="margin-top:10px">🎬 <b>"Show me" makes it real.</b> The found change of heart is deliberately tiny, so acting on it directly can leave the agent confused. The show-me step picks the nearest <i>real</i> goal that starts with your wished move, lets the agent perform it, and plays the alternative story to the end.</p>
+    </div>
+    <div style="text-align:right;margin-top:16px"><button class="primary" onclick="document.getElementById('zooModal').classList.remove('show')">Got it</button></div>
+  </div>
+</div>
+<style>#zooModal.show{display:flex !important}</style>
+
+<!-- LIGHTBOX (enlarged env snapshots) -->
+<div id="lightbox" style="position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;z-index:150;align-items:center;justify-content:center;cursor:zoom-out" onclick="this.style.display='none'">
+  <img id="lightboxImg" style="max-width:92vw;max-height:92vh;border-radius:12px">
+</div>
+
+<!-- GREETING GATE -->
+<div id="greet" style="position:fixed;inset:0;background:var(--bg);z-index:100;display:flex;align-items:center;justify-content:center;padding:30px">
+  <div style="max-width:760px;text-align:center">
+    <h1 style="font-size:26px;line-height:1.4;margin-bottom:18px">Command-Space Counterfactual Explanations for Pareto-Conditioned Reinforcement Learning</h1>
+    <div class="note" style="font-size:15px;margin-bottom:26px">Welcome! One quick question so we can show you the right version:</div>
+    <div style="font-size:18px;margin-bottom:22px"><b>Are you within the field of XAI and/or Reinforcement Learning?</b></div>
+    <div style="display:flex;gap:14px;justify-content:center">
+      <button class="primary" style="font-size:16px;padding:12px 22px" onclick="setMode('expert')">Yes — show me the full tool</button>
+      <button class="green" style="font-size:16px;padding:12px 22px" onclick="setMode('simple')">No — give me the simple version</button>
+    </div>
+  </div>
+</div>
+
+<!-- SIMPLE (NON-EXPERT) MODE -->
+<main id="simpleMain" style="display:none">
+  <section>
+    <h2 style="display:flex;align-items:center;gap:14px">1 · Choose a world
+      <button class="purple" id="sExplainZoo" style="text-transform:none;letter-spacing:0;font-size:13px" onclick="document.getElementById('zooModal').classList.add('show')">🎓 How does this work?</button>
+    </h2>
+    <div class="note">An AI agent has learned to act in each of these little worlds. Pick one to watch it work — and then ask it <i>why</i> it does what it does.</div>
+    <div id="sWorlds" style="margin-top:12px"></div>
+  </section>
+  <section id="sGoalSec" class="disabled">
+    <h2>2 · Give the agent a goal</h2>
+    <div class="note" id="sGoalNote">The agent can aim for different things — more of one, less of another. Each card is one goal it knows how to reach. The bars show how much of each thing that goal involves. Pick one!</div>
+    <div class="grid-cards" id="sGoals" style="margin-top:12px"></div>
+  </section>
+  <section id="sPlaySec" class="disabled">
+    <h2>3 · Watch it work</h2>
+    <div class="cols">
+      <div style="flex:0 0 auto">
+        <div id="sFrameWrap"><div class="noframe">…</div></div>
+        <div class="controls">
+          <button class="primary" id="sPlayBtn">▶ Play</button>
+          <button id="sStepBtn">One step</button>
+          <button id="sRestartBtn">↩ Restart</button>
+        </div>
+      </div>
+      <div>
+        <div id="sStatus" style="font-size:15px;margin-bottom:10px"></div>
+        <div id="sBars"></div>
+        <div id="sWhy" style="margin-top:16px"></div>
+      </div>
+    </div>
+  </section>
+  <section id="sResultSec" class="disabled">
+    <h2>4 · The answer</h2>
+    <div id="sAnswer"></div>
+    <div id="sShowWrap"></div>
+    <div class="controls" style="margin-top:12px"><button id="sOverBtn">↺ Start over</button></div>
+  </section>
+</main>
+
+<main id="expertMain" style="display:none">
+
+<!-- 1 · MODELS -->
+<section id="secModels">
+  <h2>1 · Pick a model — drag a card into the box or double click</h2>
+  <div class="grid-cards" id="cards" style="margin-top:12px"></div>
+  <div id="dropzone">
+    <div style="font-size:26px">⬇</div>
+    <div><b>Drop a model here to load it</b> (or double-click a card)</div>
+  </div>
+  <details style="margin-top:14px">
+    <summary>➕ Add your own PCN model (.pt)</summary>
+    <div class="note" style="margin:8px 0">Upload a full pickled PCN checkpoint (<span class="mono">torch.save(model, path)</span>, saved against the
+      pcn package classes, or TorchScript). It is validated end-to-end — load, call signature (R/RH auto-detected), output shape,
+      log-prob sanity, front file, and a full smoke rollout — before it appears in the gallery. Optionally upload the model's own
+      front as a <span class="mono">.txt</span>/CSV (RH fronts have a trailing horizon column) <b>or directly as the run's
+      <span class="mono">log.h5</span></b> — the logged non-dominated front (and horizons for RH) is extracted automatically;
+      without a front file, that environment's verified 1%-faithful command bank is used as a fallback.</div>
+    <div class="controls" style="align-items:end">
+      <label class="note" style="display:flex;flex-direction:column">model checkpoint (.pt)<input type="file" id="upModel" accept=".pt,.pth,.ts"></label>
+      <label class="note" style="display:flex;flex-direction:column">front (optional .txt / .csv / log.h5)<input type="file" id="upFront" accept=".txt,.csv,.h5,.hdf5"></label>
+      <label class="note" style="display:flex;flex-direction:column">environment<select id="upEnv"></select></label>
+      <label class="note" style="display:flex;flex-direction:column">variant<select id="upVariant">
+        <option value="auto" selected>auto-detect</option><option value="R">R (return only)</option><option value="RH">RH (return+horizon)</option></select></label>
+      <label class="note" style="display:flex;flex-direction:column">name<input id="upName" placeholder="my-model" style="width:140px"></label>
+      <button class="primary" id="btnUpload">Upload &amp; validate</button>
+      <span id="upBusy" style="display:none"><span class="spinner"></span>validating…</span>
+    </div>
+    <div id="upReport"></div>
+  </details>
+</section>
+
+<!-- 2 · ENV EXPLANATION -->
+<section id="secEnv" class="disabled">
+  <h2>2 · Understand the environment</h2>
+  <div id="envInfo"></div>
+</section>
+
+<!-- 3 · FRONT -->
+<section id="secFront" class="disabled">
+  <h2>3 · Choose a Pareto-front command</h2>
+  <div class="note" id="frontMeta"></div>
+  <div class="note" id="frontNote">Choose a non-dominated target, then start the rollout.</div>
+  <div class="scroll" style="margin-top:10px"><table id="frontTable"></table></div>
+  <div class="controls">
+    <button class="primary" id="btnStart" disabled>▶ Start rollout with selected command</button>
+    <span class="note">or custom command:</span>
+    <input id="customCmd" placeholder="comma-separated return" style="width:220px">
+    <input id="customHor" type="number" placeholder="horizon" style="display:none">
+    <button id="btnStartCustom">Start custom</button>
+  </div>
+</section>
+
+<!-- 4 · ROLLOUT -->
+<section id="secRoll" class="disabled">
+  <h2>4 · Rollout</h2>
+  <div class="cols">
+    <div style="flex:0 0 auto">
+      <div id="frameWrap"><div class="noframe">no frame</div></div>
+      <div class="controls">
+        <button id="btnBack">⏮ Back</button>
+        <button class="primary" id="btnStep">Step ▶</button>
+        <button id="btnPlay">▶ Play</button>
+        <button id="btnSpeed">x1</button>
+        <button id="btnStop">⏹ Stop</button>
+        <span class="note">window size:</span>
+        <select id="btnSize"><option value="540">XS</option><option value="720" selected>S</option><option value="900">M</option><option value="1150">L</option><option value="1400">XL</option></select>
+      </div>
+      <div class="note">Play = 1 action per second; the speed button cycles x1 → x2 → x3 → x4 (actions per second). Back rewinds one step by deterministic replay. Stop freezes the state so you can build a counterfactual at this exact timestep.</div>
+    </div>
+    <div>
+      <div class="kv" id="rollKv"></div>
+      <h3>Policy at this state</h3>
+      <div id="rollPolicy"></div>
+      <h3>Action history</h3>
+      <div class="hist" id="rollHist"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 · COUNTERFACTUAL -->
+<section id="secCF" class="disabled">
+  <h2>5 · Counterfactual — “why not this other action?”</h2>
+  <div id="cfState" class="note"></div>
+  <div class="controls">
+    <span>Foil action:</span><select id="foilSel"></select>
+    <span>Method:</span>
+    <select id="methodSel">
+      <option value="zoo">CF-ZOO</option>
+      <option value="cw">C&amp;W</option>
+    </select>
+    <button class="primary" id="btnCF">Run counterfactual search</button>
+    <span id="cfBusy" style="display:none"><span class="spinner"></span>searching…</span>
+  </div>
+  <details id="zooSettings"><summary>CF-ZOO settings</summary>
+    <div class="note" style="margin:8px 0 4px"><b>Main</b></div>
+    <div class="settings-grid" id="zooGridMain"></div>
+    <div class="note" style="margin:10px 0 4px"><b>ZOO-Adam optimizer (advanced)</b></div>
+    <div class="settings-grid" id="zooGridAdv"></div>
+  </details>
+  <details id="cwSettings" style="display:none"><summary>C&amp;W settings</summary>
+    <div class="note" style="margin:8px 0 4px"><b>Main</b></div>
+    <div class="settings-grid" id="cwGridMain"></div>
+    <div class="note" style="margin:10px 0 4px"><b>Optimizer (advanced)</b></div>
+    <div class="settings-grid" id="cwGridAdv"></div>
+  </details>
+  <div id="cfResult"></div>
+</section>
+
+<!-- 6 · CONTINUE -->
+<section id="secCont" class="disabled">
+  <h2>6 · Continue the rollout — verified realization</h2>
+  <div class="controls">
+    <button class="green" id="btnContinue">▶ Continue rollout (verified realization)</button>
+    <button id="btnFinish">✔ OK, finish &amp; save report</button>
+    <button class="purple" id="btnExplain">🎓 Explain the algorithm step by step</button>
+    <span id="contBusy" style="display:none"><span class="spinner"></span>auditioning candidates…</span>
+  </div>
+  <div id="contResult"></div>
+</section>
+
+</main>
+
+<!-- EXPLAIN MODAL -->
+<div id="modal"><div class="box">
+  <h1 style="margin-bottom:6px">The verified-realization protocol, literally step by step</h1>
+  <div class="note" style="margin-bottom:12px">This is what the “Continue rollout” button executes. Measured over all 2,534 counterfactuals the ZOO search achieves in the paper suite: <b>95.8%</b> of realized episodes land on the learned Pareto front and <b>98.5%</b> terminate properly (the misses are structural: tiny fronts or foils that exile the agent from every front-reachable region).</div>
+  <ol>
+    <li><b>Where you are.</b> You stopped at timestep <i>t</i>. The agent has already collected some reward vector <span class="mono">collected</span>, its current command is <span class="mono">remaining = desired − collected</span>, and the CF search just found a command <span class="mono">R_cf</span> that makes the policy pick your foil action instead of its greedy one. The problem: <span class="mono">R_cf</span> was chosen to be <i>minimal</i>, so it usually sits exactly on the decision boundary — issue it naively and after the flip the agent can dither there forever, collecting nothing (we filmed this happening).</li>
+    <li><b>Build the menu of trustworthy commands.</b> A verified row contains an achieved Pareto target <span class="mono">F_j</span> and its tested witness command <span class="mono">W_j</span>. Convert the witness to a residual from here: <span class="mono">candidate_j = clip(W_j − collected, bounds)</span>. (For RH models the candidate also carries the row's horizon minus the steps already spent.)</li>
+    <li><b>Sort the menu.</b> Order candidates by scaled distance to the current <span class="mono">remaining</span> command — try the most similar behaviour first, so the accepted counterfactual stays as close as possible to what the user was already asking for.</li>
+    <li><b>Audition candidates one by one.</b> For each candidate: rewind the environment to timestep <i>t</i> (deterministic fixed-seed replay of the prefix — a save-state restore, nothing semantic), issue the candidate as the new command, and simulate the whole future:
+      <ol type="a">
+        <li><b>First-action check:</b> the very first action must equal the foil. If the policy still picks its old greedy action, REJECT after one step — this candidate does not realize the counterfactual at all.</li>
+        <li><b>Landing check:</b> roll greedily to the end; the achieved total (collected + suffix) must land within tolerance of <i>some</i> point in the verified front's landing archive. Reacher uses its curated 50-point verified front. If yes → ACCEPT, done.</li>
+      </ol>
+    </li>
+    <li><b>Fallback 1 — plain R_cf.</b> If no front candidate passes both checks, issue the searched command <span class="mono">R_cf</span> itself and roll out. Sometimes the boundary command happens to behave fine.</li>
+    <li><b>Fallback 2 — R_cf + snap-once.</b> Issue <span class="mono">R_cf</span> so the foil definitely fires, take exactly one step, then re-anchor: replace the leftover command with the nearest front residual given what is now collected. The flip is real, and afterwards the agent follows a command it was actually trained on. (Known cost: if the nearest residual is the <i>original</i> plan, the agent may revert — the “revert tax”, ~5% of cases.)</li>
+    <li><b>Exhaustion.</b> If everything above fails, keep the best-effort rollout and say so explicitly. In the paper suite this only happens where it is provably impossible: fronts of size 1 (breakable-bottles, resource-gathering) or foils that exile the agent from every front-bearing subtree (three-tree, fruit-tree, branch-path timeout arithmetic).</li>
+  </ol>
+  <h3>Dummy example (Collect-Two, the paper's worked example)</h3>
+  <ol>
+    <li>Command (0, 0, 0.8, 1) at t=0: greedy action is <i>down</i> (heading for D first). Foil: <i>right</i>. ZOO finds R_cf = (0, 0, 0.8, 0.844) — minimal, boundary-sitting.</li>
+    <li>Naive R_cf realization: first action flips to <i>right</i>… then left, right, left for 50 steps. Timeout, nothing collected.</li>
+    <li>Audition #1: nearest residual is (0, 0, 0.8, 1) — the original plan. First action comes out <i>down</i> ≠ foil → REJECT after 1 step.</li>
+    <li>Audition #2: (0, 0, 1, 0.8). First action <i>right</i> ✓ — agent collects C (+1), then D (+0.8), terminates in 9 steps exactly on the front point (0, 0, 1, 0.8) → ACCEPT. Total cost: 2 auditions.</li>
+  </ol>
+  <div style="text-align:right;margin-top:14px"><button class="primary" onclick="document.getElementById('modal').classList.remove('show')">Close</button></div>
+</div></div>
+
+<!-- ENV DEEP DIVE MODAL -->
+<div id="envModal" class="modal-like" style="position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:flex-start;justify-content:center;padding:40px;z-index:60;overflow:auto">
+  <div class="box" style="background:var(--panel);border:1px solid var(--line);border-radius:14px;max-width:900px;padding:26px 30px">
+    <h1 id="envModalTitle" style="margin-bottom:10px"></h1>
+    <div id="envModalBody" class="deepdive"></div>
+    <div style="text-align:right;margin-top:14px"><button class="primary" onclick="document.getElementById('envModal').classList.remove('show')">Close</button></div>
+  </div>
+</div>
+<style>
+  #envModal.show{display:flex !important}
+  .deepdive h4{color:var(--acc);margin:16px 0 6px;font-size:14px;text-transform:uppercase;letter-spacing:.05em}
+  .deepdive p{margin:6px 0}
+  .deepdive ul{margin:6px 0;padding-left:22px}
+  .deepdive li{margin:4px 0}
+  .deepdive pre{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-family:Consolas,monospace;font-size:13px;display:inline-block}
+  .deepdive code{background:var(--panel2);border-radius:4px;padding:1px 5px}
+</style>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const api = async (path, body) => {
+  const r = await fetch(path, body ? {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)} : undefined);
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+};
+const vec = v => v == null ? "—" : "(" + v.map(x => (+x).toFixed(3).replace(/\.?0+$/,"")||"0").join(", ") + ")";
+const esc = s => String(s).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+let MODEL = null;       // /api/load payload
+let SELFRONT = null;    // selected front row
+let PLAYTIMER = null, SPEED = 1;
+let LASTSTATE = null;
+let CFRES = null;
+
+let FRAMEW = 720;
+const SIZE_OPTIONS = [["XS", 540], ["S", 720], ["M", 900], ["L", 1150], ["XL", 1400]];
+const sizeOptionsHtml = () => SIZE_OPTIONS.map(([n, w]) => `<option value="${w}"${w === FRAMEW ? " selected" : ""}>${n}</option>`).join("");
+const frameW = () => FRAMEW;
+
+const ZOO_MAIN = ["max_queries","random_directions","margin","c","clip_command","seed"];
+const ZOO_ADV = ["learning_rate","finite_diff_h","line_search_steps"];
+const CW_DEFAULTS = {confidence:0.0, learning_rate:0.001, binary_search_steps:12, max_iter:1000, initial_const:1.0, max_halving:5, max_doubling:5, batch_size:16, art_clip_relaxation:0.01, clip_command:true};
+const CW_MAIN = ["max_iter","binary_search_steps","confidence","initial_const","clip_command"];
+const CW_ADV = ["learning_rate","max_halving","max_doubling","batch_size","art_clip_relaxation"];
+const FIELD_LABELS = {initial_const: "c (initial)", c: "c"};
+
+/* ---------- 1 · model gallery ---------- */
+let MODELS_CACHE = [];
+async function refreshModels(){
+  const j = await api("/api/models");
+  MODELS_CACHE = j.models;
+  const wrap = $("cards");
+  wrap.innerHTML = "";
+  j.models.forEach(m => {
+    const c = document.createElement("div");
+    c.className = "card"; c.draggable = true; c.dataset.id = m.id;
+    c.innerHTML = `<div class="t">${esc(m.title)}</div><div class="d">${esc(m.tagline)}</div>
+      <div class="badges">${m.custom ? `<span class="chip warn">CUSTOM</span>` : ""}<span class="chip ${m.variant==="RH"?"purple":"acc"}">${m.variant === "RH" ? "RH · return+horizon" : "R · return only"}</span>
+      <span class="chip">${m.n_obj} obj · ${m.n_front} front pts</span>${m.custom ? `<button class="delbtn" title="delete this custom model">🗑</button>` : ""}</div>`;
+    c.addEventListener("dragstart", e => e.dataTransfer.setData("text/plain", m.id));
+    c.addEventListener("dblclick", () => loadModel(m.id));
+    const del = c.querySelector(".delbtn");
+    if (del) del.addEventListener("click", async e => {
+      e.stopPropagation();
+      const name = m.id.slice(8);
+      if (!confirm(`Delete custom model "${name}"? This removes its files permanently.`)) return;
+      try {
+        await api("/api/delete_custom", {name});
+        await refreshModels();
+      } catch (err) { alert("delete failed: " + err.message); }
+    });
+    wrap.appendChild(c);
+  });
+  const envSel = $("upEnv");
+  if (!envSel.options.length) {
+    [...new Set(j.models.filter(m => !m.custom).map(m => m.env))].forEach(e => {
+      envSel.insertAdjacentHTML("beforeend", `<option value="${esc(e)}">${esc(e)}</option>`);
+    });
+  }
+  return j;
+}
+
+async function initModels(){
+  const j = await refreshModels();
+  $("deviceChip").textContent = "device: " + j.device;
+  const stored = sessionStorage.getItem("cfzoo_mode");
+  if (stored === "expert" || stored === "simple") setMode(stored);
+  const dz = $("dropzone");
+  dz.addEventListener("dragover", e => { e.preventDefault(); dz.classList.add("over"); });
+  dz.addEventListener("dragleave", () => dz.classList.remove("over"));
+  dz.addEventListener("drop", e => {
+    e.preventDefault(); dz.classList.remove("over");
+    const id = e.dataTransfer.getData("text/plain");
+    if (id) loadModel(id);
+  });
+}
+
+async function loadModel(id){
+  const isCustom = id.startsWith("custom::");
+  const [env, variant] = isCustom ? [id.slice(8), ""] : id.split("::");
+  const dz = $("dropzone");
+  dz.classList.add("loaded");
+  dz.innerHTML = `<div><span class="spinner"></span>loading <b>${esc(env)}</b> ${variant ? `(${variant})` : "(custom)"}…</div>`;
+  try {
+    MODEL = await api("/api/load", isCustom ? {custom: id.slice(8)} : {env, variant});
+  } catch (err) {
+    dz.classList.remove("loaded");
+    dz.innerHTML = `<div style="color:var(--bad)">load failed: ${esc(err.message).slice(0,300)}</div>`;
+    return;
+  }
+  const sourceLabel = MODEL.front_source || "Achievable Pareto front";
+  dz.innerHTML = `<div>✔ loaded <b>${esc(MODEL.title)}</b> — variant <b>${MODEL.variant}</b> · ${esc(sourceLabel)}${MODEL.render_available?"":" · (no visual render for this env — state shown numerically)"}</div>`;
+  renderEnvInfo(); renderFront();
+  ["secEnv","secFront"].forEach(s => $(s).classList.remove("disabled"));
+  ["secRoll","secCF","secCont"].forEach(s => $(s).classList.add("disabled"));
+  $("cfResult").innerHTML = ""; $("contResult").innerHTML = "";
+  stopPlay();
+  $("secEnv").scrollIntoView({behavior:"smooth"});
+}
+
+/* ---------- 2 · env explanation ---------- */
+function renderEnvInfo(){
+  const i = MODEL.info, obj = MODEL.objectives;
+  const row = (k, v) => `<tr><th style="width:150px;vertical-align:top">${k}</th><td style="white-space:normal">${v}</td></tr>`;
+  $("envInfo").innerHTML = `
+    <h3 style="margin-top:0">${esc(i.title || MODEL.env)} <span class="chip ${MODEL.variant==="RH"?"purple":"acc"}">${MODEL.variant}</span>
+      ${i.deep_dive ? `<button class="purple" id="btnDeepDive" style="margin-left:14px">📖 Detailed Environment Info</button>` : ""}</h3>
+    <div class="note">${esc(i.tagline || "")}</div>
+    <div class="scroll-x"><table style="margin-top:10px">
+      ${row("Objectives", obj.map((o,k)=>`<span class="chip">ch ${k}: ${esc(o)}</span>`).join(" "))}
+      ${row("Observation", esc(i.observation || "—"))}
+      ${row("Actions", esc(i.actions || "—") + "<br><span class='note'>this model: " + MODEL.action_labels.map((l,a)=>`${a}=${esc(l)}`).join(", ") + "</span>")}
+      ${row("Rewards", esc(i.rewards || "—"))}
+      ${row("Termination", esc(i.termination || "—"))}
+      ${row("Pareto front", esc(i.front || "—"))}
+      ${row("Quirks", esc(i.quirks || "—"))}
+      ${row("Conditioning", esc(i.variant_note || ""))}
+      ${row("Command bounds", `<span class="mono">low ${vec(MODEL.bounds_low)} · high ${vec(MODEL.bounds_high)}</span>`)}
+    </table></div>`;
+  const dd = $("btnDeepDive");
+  if (dd) dd.addEventListener("click", () => {
+    $("envModalTitle").textContent = "Env Deep Dive — " + (i.title || MODEL.env);
+    $("envModalBody").innerHTML = i.deep_dive;
+    $("envModal").classList.add("show");
+  });
+}
+
+/* ---------- 3 · front picker ---------- */
+function renderFront(){
+  const t = $("frontTable");
+  const hasH = MODEL.front_horizons != null;
+  const verified = !!MODEL.front_verified;
+  const bench = MODEL.front_benchmark
+    ? ` · state coverage ${MODEL.front_benchmark.state_coverage} · ZOO→realization ${MODEL.front_benchmark.zoo_realization} at ${MODEL.front_benchmark.zoo_max_queries} queries`
+    : "";
+  $("frontMeta").textContent = verified
+    ? `${MODEL.front.length} displayed witnesses · ${MODEL.landing_front_size} verified ND landing outcomes · tolerance ${MODEL.landing_tol}${bench}`
+    : `${MODEL.front.length} uploaded custom-front points · tolerance ${MODEL.landing_tol}`;
+  $("frontNote").innerHTML = verified
+    ? `Each row shows an <b>achieved non-dominated target</b> and the separately verified <b>desired command</b> the app will issue.`
+    : `These are commands from the uploaded custom front. The displayed target is also the command issued to the custom model.`;
+  let html = `<tr><th>#</th>${MODEL.objectives.map((o,k)=>`<th>achieved ch ${k}</th>`).join("")}${verified?"<th>desired command</th><th>error</th>":""}${hasH?"<th>horizon</th>":""}</tr>`;
+  MODEL.front.forEach((f,j) => {
+    const witness = verified ? `<td class="mono">${vec(MODEL.front_commands[j])}</td><td class="mono">${(+MODEL.front_fidelity[j]).toFixed(6)}</td>` : "";
+    html += `<tr class="clickable" data-j="${j}"><td>${j}</td>${f.map(v=>`<td class="mono">${(+v).toFixed(4)}</td>`).join("")}${witness}${hasH?`<td class="mono">${MODEL.front_horizons[j]}</td>`:""}</tr>`;
+  });
+  t.innerHTML = html;
+  t.querySelectorAll("tr.clickable").forEach(tr => tr.addEventListener("click", () => {
+    t.querySelectorAll("tr").forEach(x=>x.classList.remove("sel"));
+    tr.classList.add("sel");
+    SELFRONT = +tr.dataset.j;
+    $("btnStart").disabled = false;
+  }));
+  $("customHor").style.display = hasH ? "" : "none";
+  SELFRONT = null; $("btnStart").disabled = true;
+}
+
+$("btnStart").addEventListener("click", () => startRoll({front_index: SELFRONT}));
+$("btnStartCustom").addEventListener("click", () => {
+  const vals = $("customCmd").value.split(/[\s,]+/).filter(x=>x).map(Number);
+  if (vals.length !== MODEL.objectives.length) { alert(`need ${MODEL.objectives.length} values`); return; }
+  const body = {custom_return: vals};
+  if (MODEL.front_horizons != null && $("customHor").value) body.custom_horizon = +$("customHor").value;
+  startRoll(body);
+});
+
+async function startRoll(body){
+  const st = await api("/api/start", body);
+  CFRES = null; $("cfResult").innerHTML = ""; $("contResult").innerHTML = "";
+  $("secRoll").classList.remove("disabled");
+  $("secCF").classList.add("disabled"); $("secCont").classList.add("disabled");
+  renderState(st);
+  $("secRoll").scrollIntoView({behavior:"smooth"});
+}
+
+/* ---------- 4 · rollout ---------- */
+function renderState(st){
+  LASTSTATE = st;
+  if (!st.active) return;
+  $("frameWrap").innerHTML = st.frame
+    ? `<img id="frame" style="width:${frameW()}px" src="data:image/png;base64,${st.frame}">`
+    : `<div class="noframe">no visual render<br><br>obs = <span class="mono">${esc(JSON.stringify(st.obs))}</span></div>`;
+  const done = st.terminated || st.truncated;
+  const kv = [
+    ["timestep t", st.t],
+    ...(st.front_target ? [["selected achieved target", `<span class="result-vec">${vec(st.front_target)}</span> <span class="chip ok">verified ND</span>`]] : []),
+    ["desired command", `<span class="result-vec">${vec(st.desired)}</span>` + (st.desired_horizon!=null?` <span class="chip purple">h=${st.desired_horizon}</span>`:"")],
+    ["remaining command", `<span class="result-vec">${vec(st.remaining)}</span>` + (st.remaining_horizon!=null?` <span class="chip purple">h=${st.remaining_horizon}</span>`:"")],
+    ["collected so far", `<span class="result-vec">${vec(st.collected)}</span>`],
+    ["observation", `<span class="mono">${esc(JSON.stringify(st.obs))}</span>`],
+    ["status", done ? (st.terminated?`<span class="chip ok">TERMINATED</span>`:`<span class="chip warn">TRUNCATED (timeout)</span>`) : `<span class="chip acc">running</span>`],
+  ];
+  $("rollKv").innerHTML = kv.map(([k,v])=>`<div class="k">${k}</div><div>${v}</div>`).join("");
+  if (st.policy) {
+    $("rollPolicy").innerHTML = st.policy.probs.map(p => `
+      <div class="probbar ${p.action===st.policy.action?"star":""} ${p.valid?"":"invalid"}">
+        <div class="lbl">${p.action}: ${esc(p.label)}${p.action===st.policy.action?" ★":""}</div>
+        <div class="bar"><div class="fill" style="width:${(100*p.p).toFixed(1)}%"></div></div>
+        <div class="val">${p.p.toFixed(3)}</div>
+      </div>`).join("") + `<div class="note">★ = greedy action the agent will take next. Greyed = masked (invalid here).</div>`;
+  } else {
+    $("rollPolicy").innerHTML = `<div class="note">episode over — rewind with Back or start a new rollout.</div>`;
+  }
+  $("rollHist").innerHTML = st.history.map(h => {
+    const rw = h.reward.some(x => x !== 0);
+    return `<span class="h ${rw?"rw":""}" title="p=${h.p.toFixed(3)} reward=${vec(h.reward)}">${h.t}:${esc(h.label)}${rw?" ✦":""}</span>`;
+  }).join("");
+  $("btnStep").disabled = done;
+  $("btnPlay").disabled = done;
+  if (done) stopPlay();
+  // CF section is armed whenever a rollout state exists and episode not over
+  if (!done && st.policy) { $("secCF").classList.remove("disabled"); renderCFState(st); }
+  else $("secCF").classList.add("disabled");
+}
+
+$("btnStep").addEventListener("click", async () => renderState(await api("/api/step", {})));
+$("btnBack").addEventListener("click", async () => { stopPlay(); renderState(await api("/api/back", {})); });
+$("btnStop").addEventListener("click", () => { stopPlay(); if (LASTSTATE) $("secCF").scrollIntoView({behavior:"smooth"}); });
+const nextSpeed = s => s === 4 ? 8 : (s >= 8 ? 1 : s + 1);
+$("btnSpeed").addEventListener("click", () => {
+  SPEED = nextSpeed(SPEED);
+  $("btnSpeed").textContent = "x" + SPEED;
+  if (PLAYTIMER) { stopPlay(); startPlay(); }
+});
+$("btnSize").addEventListener("change", () => {
+  FRAMEW = +$("btnSize").value;
+  const c = $("cSize");
+  if (c) c.value = String(FRAMEW);
+  if (LASTSTATE) renderState(LASTSTATE);
+});
+$("btnPlay").addEventListener("click", () => PLAYTIMER ? stopPlay() : startPlay());
+function startPlay(){
+  $("btnPlay").textContent = "⏸ Pause";
+  PLAYTIMER = setInterval(async () => {
+    const st = await api("/api/step", {});
+    renderState(st);
+    if (st.terminated || st.truncated) stopPlay();
+  }, 1000 / SPEED);
+}
+function stopPlay(){
+  if (PLAYTIMER) clearInterval(PLAYTIMER);
+  PLAYTIMER = null;
+  $("btnPlay").textContent = "▶ Play";
+}
+
+/* ---------- 5 · counterfactual ---------- */
+function renderCFState(st){
+  $("cfState").innerHTML = `Frozen at <b>t=${st.t}</b>. Greedy action here: <b>${st.policy.action}: ${esc(st.policy.label)}</b> (p=${st.policy.probs[st.policy.action].p.toFixed(3)}).
+    Pick the foil — the action you wish it had taken — and the search finds the minimal command change that flips the policy to it. <b>The search only queries the network; the environment does not move.</b>`;
+  const sel = $("foilSel");
+  sel.innerHTML = st.policy.probs
+    .filter(p => p.valid && p.action !== st.policy.action)
+    .map(p => `<option value="${p.action}">${p.action}: ${esc(p.label)} (p=${p.p.toFixed(3)})</option>`).join("");
+  buildSettingsForms();
+}
+
+let settingsBuilt = false;
+function buildSettingsForms(){
+  if (settingsBuilt) return;
+  settingsBuilt = true;
+  const mk = (grid, defs, order) => {
+    $(grid).innerHTML = order.map(k => {
+      const v = defs[k], lbl = FIELD_LABELS[k] || k;
+      if (k === "random_directions")
+        return `<label>${lbl}<input data-k="${k}" value="" placeholder="auto (= max_queries)"></label>`;
+      if (typeof v === "boolean")
+        return `<label>${lbl}<select data-k="${k}"><option value="true"${v?" selected":""}>true</option><option value="false"${v?"":" selected"}>false</option></select></label>`;
+      return `<label>${lbl}<input data-k="${k}" value="${v}"></label>`;
+    }).join("");
+  };
+  mk("zooGridMain", MODEL.zoo_defaults, ZOO_MAIN);
+  mk("zooGridAdv", MODEL.zoo_defaults, ZOO_ADV);
+  mk("cwGridMain", CW_DEFAULTS, CW_MAIN);
+  mk("cwGridAdv", CW_DEFAULTS, CW_ADV);
+}
+$("methodSel").addEventListener("change", () => {
+  const zoo = $("methodSel").value === "zoo";
+  $("zooSettings").style.display = zoo ? "" : "none";
+  $("cwSettings").style.display = zoo ? "none" : "";
+});
+
+function collectSettings(containerId){
+  const out = {};
+  document.querySelectorAll(`#${containerId} [data-k]`).forEach(el => {
+    let v = el.value;
+    if (v === "true") v = true; else if (v === "false") v = false;
+    out[el.dataset.k] = v;
+  });
+  return out;
+}
+
+$("btnCF").addEventListener("click", async () => {
+  stopPlay();
+  const method = $("methodSel").value;
+  $("btnCF").disabled = true; $("cfBusy").style.display = "";
+  try {
+    CFRES = await api("/api/cf", {
+      method, a_foil: +$("foilSel").value,
+      settings: collectSettings(method === "zoo" ? "zooSettings" : "cwSettings"),
+    });
+    renderCFResult();
+  } catch (err) {
+    $("cfResult").innerHTML = `<div class="banner bad">search failed:<br><pre class="mono" style="white-space:pre-wrap">${esc(err.message).slice(0,1500)}</pre></div>`;
+  } finally {
+    $("btnCF").disabled = false; $("cfBusy").style.display = "none";
+  }
+});
+
+function renderCFResult(){
+  const r = CFRES, f = r.final, o = r.original;
+  const ok = r.success;
+  let stages = "";
+  if (r.method === "zoo") {
+    stages = `<span class="chip ${r.stages.seed_success?"ok":"bad"}">ray-seed ${r.stages.seed_success?"✓ found":"✗ none"}</span>`;
+  }
+  const probRow = (q, name) => q ? `<tr><td>${name}</td><td class="mono">${vec(q.command)}</td>
+      <td>${q.greedy_action}: ${esc(q.greedy_label)}</td>
+      <td class="mono">${q.probs.map(p=>`${esc(p.label)}=${p.p.toFixed(3)}`).join("  ")}</td></tr>` : "";
+  $("cfResult").innerHTML = `
+    <div class="banner ${ok?"ok":"bad"}">
+      <b>${ok ? "✓ Counterfactual found" : "✗ No counterfactual within budget"}</b> — method ${r.method.toUpperCase()},
+      t=${r.t}, flip <b>${esc(r.a_star_label)}</b> → <b>${esc(r.a_foil_label)}</b><br>
+      ${stages}
+      <div style="margin-top:8px" class="kv">
+        <div class="k">counterfactual command R_cf</div><div><span class="result-vec">${vec(f?.command)}</span></div>
+        <div class="k">delta from remaining</div><div><span class="result-vec">${vec(f?.delta)}</span></div>
+        <div class="k">distance (raw L2 / scaled)</div><div class="mono">${f?f.l2_norm.toFixed(5):"—"} / ${f?f.scaled_distance.toFixed(5):"—"}</div>
+        <div class="k">foil margin (κ target ${r.settings.margin ?? "0.05"})</div><div class="mono">${f?f.target_margin.toFixed(4):"—"}</div>
+      </div>
+      <div class="scroll-x"><table style="margin-top:8px">
+        <tr><th></th><th>command</th><th>greedy action</th><th>action probabilities</th></tr>
+        ${probRow(o, "original (remaining)")}${probRow(f, "counterfactual R_cf")}
+      </table></div>
+      ${(r.explanation || []).length ? `<div style="margin-top:10px;padding:10px 14px;background:var(--panel2);border:1px solid var(--line);border-radius:8px">
+        <b>🗣 In plain words</b>${r.explanation.map(s => `<p style="margin:6px 0">${esc(s)}</p>`).join("")}</div>` : ""}
+      ${!ok && f ? `<div class="note" style="margin-top:8px">ℹ On failure this R_cf row is only a <b>best-effort diagnostic</b> — the closest the search got to promoting your foil <b>${esc(r.a_foil_label)}</b>.${f.greedy_action !== r.a_star && f.greedy_action !== r.a_foil ? ` It happens to flip the greedy action to <b>${esc(f.greedy_label)}</b>, but that is a different counterfactual than the one you asked for — success requires <b>${esc(r.a_foil_label)}</b> itself to win with margin ≥ κ.` : ""}</div>` : ""}
+    </div>`;
+  $("secCont").classList.remove("disabled");
+  $("btnContinue").disabled = !ok;
+  $("btnFinish").disabled = false;
+  $("contResult").innerHTML = ok ? "" :
+    `<div class="note">No successful counterfactual — nothing to realize. You can rerun with a bigger budget, pick another foil, or finish.</div>`;
+  $("secCont").scrollIntoView({behavior:"smooth"});
+}
+
+/* ---------- 6 · continue rollout ---------- */
+$("btnFinish").addEventListener("click", async () => {
+  $("btnFinish").disabled = true;
+  const r = await api("/api/finish", {save: true});
+  CFRES = null;
+  $("btnContinue").disabled = true;
+  if (r.content) {
+    const blob = new Blob([r.content], {type: "text/plain"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = r.filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+  $("contResult").innerHTML = `<div class="banner ok">Finished. Report saved to <span class="mono">${esc(r.path || "-")}</span> (and downloaded).
+    Continue-rollout is disabled until you generate a new counterfactual.</div>`;
+});
+$("btnExplain").addEventListener("click", () => $("modal").classList.add("show"));
+
+$("btnContinue").addEventListener("click", async () => {
+  $("btnContinue").disabled = true; $("contBusy").style.display = "";
+  try {
+    const r = await api("/api/continue", {});
+    renderContinue(r);
+  } catch (err) {
+    $("contResult").innerHTML = `<div class="banner bad">continue failed:<br><pre class="mono" style="white-space:pre-wrap">${esc(err.message).slice(0,1500)}</pre></div>`;
+  } finally {
+    $("btnContinue").disabled = false; $("contBusy").style.display = "none";
+  }
+});
+
+function renderContinue(r){
+  const logRows = r.audition_log.map((e,i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td><span class="chip ${e.tier==="front"?"acc":e.tier==="rcf"?"warn":"purple"}">${e.tier}</span></td>
+      <td class="mono">${vec(e.issued)}${e.issued_horizon!=null?` h=${e.issued_horizon}`:""}</td>
+      <td class="mono">${e.target_front_point?vec(e.target_front_point):"—"}</td>
+      <td>${e.first_action?`${esc(e.first_action.label)}`:(e.verdict==="prefix ended early"?"—":"foil ✓")}</td>
+      <td class="mono">${e.achieved?vec(e.achieved):"—"}</td>
+      <td class="mono">${e.fd!=null?e.fd:"—"}</td>
+      <td>${e.verdict==="ACCEPT"?`<span class="chip ok">ACCEPT</span>`:e.verdict.startsWith("REJECT")?`<span class="chip bad">${e.verdict}</span>`:`<span class="chip warn">${e.verdict}</span>`}</td>
+    </tr>`).join("");
+
+  const w = r.winner;
+  let winnerHtml = "";
+  if (w) {
+    const tierMsg = {
+      "front": "front-candidate audition succeeded — the counterfactual is realized by issuing a trained front command whose residual both flips the foil AND completes coherently (your “option 2”).",
+      "rcf": "the searched R_cf itself rolled out coherently — no re-anchoring needed.",
+      "rcf+snap": "fallback: flip under R_cf for one step, then snap the leftover command to the nearest front residual (your “option 1”). Watch for the revert tax below.",
+    }[w.tier];
+    winnerHtml = `
+      <div class="banner ${r.hit?"ok":"warn"}">
+        <b>${r.hit ? "✓ Realized on the verified front archive" : "△ Best effort (missed the front archive)"}</b> — winning tier: <b>${w.tier}</b>. ${tierMsg}
+        <div class="kv" style="margin-top:8px">
+          <div class="k">original front point (what you asked at start)</div><div><span class="result-vec">${vec(r.original_front_point)}</span></div>
+          <div class="k">original witness command issued</div><div><span class="result-vec">${vec(r.original_issued_command)}</span></div>
+          <div class="k">ZOO/CW command R_cf (what the search asked)</div><div><span class="result-vec">${vec(r.rcf_command)}</span></div>
+          <div class="k">issued remaining command (what we actually issued at t=${r.t})</div><div><span class="result-vec">${vec(w.issued)}</span>${w.issued_horizon!=null?` <span class="chip purple">h=${w.issued_horizon}</span>`:""}</div>
+          <div class="k">target front point of that command</div><div>${w.target_front_point?`<span class="result-vec">${vec(w.target_front_point)}</span> (#${w.target_front_index})`:"— (R_cf tier)"}</div>
+          <div class="k">achieved episode total</div><div><span class="result-vec">${vec(r.achieved_total)}</span></div>
+          <div class="k">nearest verified archive point to achieved</div><div><span class="result-vec">${vec(r.nearest_front_point)}</span> (#${r.nearest_front_index}) · dist ${r.front_distance} ${r.on_front?`<span class="chip ok">ON FRONT (tol ${r.tol})</span>`:`<span class="chip bad">off front</span>`}</div>
+          <div class="k">episode end</div><div>${r.terminated?`<span class="chip ok">TERMINATED</span>`:`<span class="chip warn">TRUNCATED</span>`}</div>
+          <div class="k">achieved == commanded front point?</div><div>${r.target_identity?`<span class="chip ok">yes — exact target identity</span>`:`<span class="chip">no — landed on a (possibly different) front point</span>`}</div>
+          <div class="k">original episode outcome (no CF)</div><div><span class="result-vec">${vec(r.original_outcome.total)}</span></div>
+          <div class="k">reverted to original outcome?</div><div>${r.reverted_to_original?`<span class="chip warn">yes — revert tax: the flip happened but the plan snapped back</span>`:`<span class="chip ok">no — genuinely different outcome</span>`}</div>
+        </div>
+      </div>`;
+  } else {
+    winnerHtml = `<div class="banner bad"><b>✗ ${esc(r.outcome || "no realization possible")}</b></div>`;
+  }
+
+  $("contResult").innerHTML = `
+    <h3>Audition log (${r.rollouts_used} rollout${r.rollouts_used===1?"":"s"}, landing tolerance ${r.tol})</h3>
+    <div class="scroll"><table>
+      <tr><th>#</th><th>tier</th><th>issued command</th><th>target front pt</th><th>1st action</th><th>achieved</th><th>front dist</th><th>verdict</th></tr>
+      ${logRows}
+    </table></div>
+    ${winnerHtml}
+    ${w && r.steps ? `<div class="playwrap"><h3>Watch the realized continuation (${r.steps.length} steps)</h3>
+      <div class="cols"><div style="flex:0 0 auto"><div id="contFrameWrap"><div class="noframe">press play</div></div>
+      <div class="controls">
+        <button id="cPrev">⏮</button><button class="primary" id="cPlay">▶ Play</button><button id="cNext">⏭</button>
+        <button id="cSpeed">x1</button><span class="note" id="cPos"></span>
+        <span class="note">window size:</span><select id="cSize">${sizeOptionsHtml()}</select>
+      </div></div>
+      <div id="cInfo" class="stepinfo"></div></div></div>` : ""}`;
+
+  if (w && r.steps) initContPlayer(r.steps, r.t);
+}
+
+function initContPlayer(steps, t0){
+  let idx = -1, timer = null, spd = 1;
+  const show = i => {
+    idx = Math.max(-1, Math.min(steps.length - 1, i));
+    const s = idx >= 0 ? steps[idx] : null;
+    $("contFrameWrap").innerHTML = s && s.frame
+      ? `<img id="frame" style="width:${frameW()}px" src="data:image/png;base64,${s.frame}">`
+      : `<div class="noframe">${s ? "no visual render" : "start of continuation — press ▶"}</div>`;
+    $("cPos").textContent = idx >= 0 ? `step ${idx+1}/${steps.length} · t=${t0 + idx + 1}` : `frozen at t=${t0}`;
+    $("cInfo").innerHTML = s ? `
+      <div class="kv">
+        <div class="k">timestep t</div><div><b>${t0 + s.step}</b> <span class="note">(frozen at t=${t0} + suffix step ${s.step})</span></div>
+        <div class="k">suffix step</div><div>${s.step}${s.step===1?` <span class="chip acc">FLIP — first action must equal the foil</span>`:""}</div>
+        <div class="k">action</div><div><b>${s.action}: ${esc(s.label)}</b> (p=${s.p.toFixed(3)})</div>
+        <div class="k">reward</div><div class="mono">${vec(s.reward)}${s.reward.some(x=>x!==0)?" ✦ collected!":""}</div>
+        <div class="k">remaining command after</div><div class="mono">${vec(s.remaining_after)}</div>
+        <div class="k">episode total so far</div><div class="mono">${vec(s.collected_total)}</div>
+        ${s.snap?`<div class="k">snap-once</div><div class="mono" style="color:var(--purple)">${vec(s.snap.snap_from)} → ${vec(s.snap.snap_to)}</div>`:""}
+        ${s.terminated?`<div class="k">status</div><div><span class="chip ok">TERMINATED</span></div>`:s.truncated?`<div class="k">status</div><div><span class="chip warn">TRUNCATED</span></div>`:""}
+      </div>` : "";
+  };
+  const stop = () => { if (timer) clearInterval(timer); timer = null; $("cPlay").textContent = "▶ Play"; };
+  $("cPrev").addEventListener("click", () => { stop(); show(idx - 1); });
+  $("cNext").addEventListener("click", () => { stop(); show(idx + 1); });
+  $("cSpeed").addEventListener("click", () => { spd = nextSpeed(spd); $("cSpeed").textContent = "x" + spd; if (timer) { stop(); play(); } });
+  $("cSize").addEventListener("change", () => {
+    FRAMEW = +$("cSize").value;
+    $("btnSize").value = String(FRAMEW);
+    show(idx);
+  });
+  const play = () => {
+    $("cPlay").textContent = "⏸ Pause";
+    timer = setInterval(() => { if (idx >= steps.length - 1) stop(); else show(idx + 1); }, 1000 / spd);
+  };
+  $("cPlay").addEventListener("click", () => timer ? stop() : play());
+  show(-1);
+}
+
+/* ---------- custom model upload ---------- */
+const fileB64 = f => new Promise((res, rej) => {
+  if (!f) { res(""); return; }
+  const r = new FileReader();
+  r.onload = () => res(String(r.result).split(",")[1] || "");
+  r.onerror = rej;
+  r.readAsDataURL(f);
+});
+
+$("btnUpload").addEventListener("click", async () => {
+  const mf = $("upModel").files[0];
+  if (!mf) { $("upReport").innerHTML = `<div class="banner bad">pick a model .pt file first</div>`; return; }
+  if (mf.size > 512 * 1024 * 1024) { $("upReport").innerHTML = `<div class="banner bad">model file exceeds the 512 MB limit</div>`; return; }
+  $("btnUpload").disabled = true; $("upBusy").style.display = "";
+  $("upReport").innerHTML = "";
+  try {
+    const body = {
+      name: $("upName").value || mf.name.replace(/\.(pt|pth|ts)$/i, ""),
+      env: $("upEnv").value,
+      variant: $("upVariant").value,
+      model_b64: await fileB64(mf),
+      front_b64: await fileB64($("upFront").files[0]),
+    };
+    const r = await api("/api/upload_model", body);
+    const icon = s => s === "ok" ? "✅" : s === "warn" ? "⚠️" : "❌";
+    $("upReport").innerHTML = `
+      <div class="banner ${r.ok ? "ok" : "bad"}" style="margin-top:10px">
+        <b>${r.ok ? `✓ Registered as "${esc(r.name)}" — find it in the gallery above` : "✗ Validation failed — nothing was registered"}</b>
+        <table style="margin-top:8px">${r.checks.map(c =>
+          `<tr><td>${icon(c.status)}</td><td style="white-space:nowrap">${esc(c.step)}</td><td style="white-space:normal">${esc(c.detail)}</td></tr>`).join("")}
+        </table>
+      </div>`;
+    if (r.ok) await refreshModels();
+  } catch (err) {
+    $("upReport").innerHTML = `<div class="banner bad">upload failed:<br><pre class="mono" style="white-space:pre-wrap">${esc(err.message).slice(0,1200)}</pre></div>`;
+  } finally {
+    $("btnUpload").disabled = false; $("upBusy").style.display = "none";
+  }
+});
+
+/* ---------- mode gate + simple (non-expert) mode ---------- */
+function setMode(m){
+  sessionStorage.setItem("cfzoo_mode", m);
+  $("greet").style.display = "none";
+  $("expertMain").style.display = m === "expert" ? "" : "none";
+  $("simpleMain").style.display = m === "simple" ? "" : "none";
+  const sw = $("modeSwitch");
+  sw.style.display = "";
+  sw.textContent = m === "expert" ? "↔ switch to simple view" : "↔ switch to expert view";
+  sw.onclick = () => setMode(m === "expert" ? "simple" : "expert");
+  if (m === "simple") sInitWorlds();
+}
+
+const SM = {timer: null, busy: false, goalMap: [], lastGoal: null};
+
+function sInitWorlds(){
+  const wrap = $("sWorlds");
+  if (wrap.dataset.built) return;
+  wrap.dataset.built = "1";
+  const S_ORDER = ["collect_two", "branch-path", "reward-line", "three-tree", "dst",
+                   "four-room-v0", "resource-gathering-v0", "breakable-bottles-v0", "fruit-tree-v0",
+                   "minecart", "mo-mountaincar-timespeed-v0", "mo-lunar-lander-v3", "mo-reacher-v5",
+                   "walkroom2", "walkroom3"];
+  const rank = e => { const i = S_ORDER.indexOf(e); return i < 0 ? 99 : i; };
+  MODELS_CACHE.filter(m => m.variant === "R" && !m.custom)
+    .sort((a, b) => rank(a.env) - rank(b.env)).forEach(m => {
+    const c = document.createElement("div");
+    c.className = "card scard";
+    const src = "/api/thumb/" + encodeURIComponent(m.env);
+    c.innerHTML = `<div class="t">${esc(m.title)}</div><div class="d">${esc(m.tagline)}</div>
+      <img class="sthumb" src="${src}" loading="lazy" title="click to enlarge"
+        style="width:100%;border-radius:8px;margin-top:8px;cursor:zoom-in;border:1px solid var(--line)">
+      <div class="note" style="font-size:11px;margin-top:3px">🔍 click the picture to enlarge · click the card to choose</div>`;
+    c.addEventListener("click", () => sLoadWorld(m.env, c));
+    const th = c.querySelector(".sthumb");
+    th.addEventListener("click", e => {
+      e.stopPropagation();
+      $("lightboxImg").src = src;
+      $("lightbox").style.display = "flex";
+    });
+    wrap.appendChild(c);
+  });
+}
+
+async function sLoadWorld(env, card){
+  document.querySelectorAll("#sWorlds .card").forEach(x => x.style.borderColor = "");
+  if (card) card.style.borderColor = "var(--ok)";
+  sStopPlay();
+  MODEL = await api("/api/load", {env, variant: "R"});
+  sBuildGoals();
+  $("sGoalSec").classList.remove("disabled");
+  $("sPlaySec").classList.add("disabled");
+  $("sResultSec").classList.add("disabled");
+  $("sGoalSec").scrollIntoView({behavior: "smooth"});
+}
+
+function sNorm(v, i){
+  const lo = +MODEL.bounds_low[i], hi = +MODEL.bounds_high[i];
+  const t = hi <= 0 ? (hi - v) / ((hi - lo) || 1) : (v - lo) / ((hi - lo) || 1);
+  return Math.max(0, Math.min(1, t));
+}
+
+function sBarRow(name, frac, color){
+  return `<div style="display:flex;align-items:center;gap:8px;margin:3px 0">
+    <div style="width:130px;font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(name)}</div>
+    <div style="flex:1;height:10px;background:var(--panel);border-radius:5px;overflow:hidden"><div style="width:${(100*frac).toFixed(0)}%;height:100%;background:${color}"></div></div></div>`;
+}
+
+function sBuildGoals(){
+  const front = MODEL.front, names = MODEL.objective_names_short;
+  const n = front.length, maxCards = 12;
+  const idxs = n <= maxCards ? front.map((_, j) => j)
+    : Array.from({length: maxCards}, (_, k) => Math.round(k * (n - 1) / (maxCards - 1)));
+  SM.goalMap = [...new Set(idxs)];
+  $("sGoalNote").textContent = (n > maxCards ? `This agent knows ${n} different goals — here is a spread of them. ` : "") +
+    "Each card is one goal the agent knows how to reach; the bars show how much of each thing that goal involves. Pick one!";
+  $("sGoals").innerHTML = "";
+  SM.goalMap.forEach((j, k) => {
+    const c = document.createElement("div");
+    c.className = "card";
+    c.innerHTML = `<div class="t">Goal ${k + 1}</div>` +
+      front[j].map((v, i) => sBarRow(names[i], sNorm(v, i), "var(--acc)")).join("");
+    c.addEventListener("click", () => sStart(j, c));
+    $("sGoals").appendChild(c);
+  });
+}
+
+async function sStart(j, card){
+  document.querySelectorAll("#sGoals .card").forEach(x => x.style.borderColor = "");
+  if (card) card.style.borderColor = "var(--ok)";
+  sStopPlay();
+  SM.lastGoal = j;
+  const st = await api("/api/start", {front_index: j});
+  $("sPlaySec").classList.remove("disabled");
+  $("sResultSec").classList.add("disabled");
+  $("sAnswer").innerHTML = ""; $("sShowWrap").innerHTML = "";
+  sRender(st);
+  $("sPlaySec").scrollIntoView({behavior: "smooth"});
+}
+
+function sRender(st){
+  $("sFrameWrap").innerHTML = st.frame
+    ? `<img style="width:640px;max-width:100%;border-radius:10px;border:1px solid var(--line)" src="data:image/png;base64,${st.frame}">`
+    : `<div class="noframe">this world has no picture</div>`;
+  const done = st.terminated || st.truncated;
+  $("sStatus").innerHTML = done
+    ? (st.terminated ? "🎉 <b>Done!</b> The agent finished its plan." : "⏱ <b>Out of time</b> — the agent did what it could.")
+    : (st.t === 0 ? "The agent is ready. Press <b>Play</b> — or take it one step at a time." : "The agent is working toward its goal…");
+  const names = MODEL.objective_names_short;
+  $("sBars").innerHTML = `<div class="note" style="margin-bottom:4px">its goal:</div>` +
+    st.desired.map((v, i) => sBarRow(names[i], sNorm(v, i), "var(--purple)")).join("") +
+    `<div class="note" style="margin:8px 0 4px">gathered so far:</div>` +
+    st.collected.map((v, i) => sBarRow(names[i], sNorm(v, i), "var(--ok)")).join("");
+  if (!done && st.policy) {
+    const foils = st.policy.probs.filter(p => p.valid && p.action !== st.policy.action);
+    $("sWhy").innerHTML = `<div style="font-size:15px">Next, the agent wants to do: <b>${esc(st.policy.label)}</b></div>
+      <div class="note" style="margin:6px 0">Do you wish it did something else? Ask it:</div>
+      <div class="controls">${foils.map(p => `<button data-a="${p.action}" class="sFoil">why not “${esc(p.label)}”?</button>`).join("")}</div>`;
+    document.querySelectorAll(".sFoil").forEach(b => b.addEventListener("click", () => sAsk(+b.dataset.a)));
+  } else {
+    $("sWhy").innerHTML = done ? `<div class="note">Restart to watch again — or pause mid-way next time and ask a question.</div>` : "";
+  }
+  $("sStepBtn").disabled = done || SM.busy;
+  $("sPlayBtn").disabled = done || SM.busy;
+  if (done) sStopPlay();
+}
+
+function sStopPlay(){
+  if (SM.timer) clearInterval(SM.timer);
+  SM.timer = null;
+  const b = $("sPlayBtn");
+  if (b) b.textContent = "▶ Play";
+}
+
+$("sPlayBtn").addEventListener("click", async () => {
+  if (SM.timer) { sStopPlay(); return; }
+  $("sPlayBtn").textContent = "⏸ Pause";
+  SM.timer = setInterval(async () => {
+    if (SM.busy) return;
+    const st = await api("/api/step", {});
+    sRender(st);
+    if (st.terminated || st.truncated) sStopPlay();
+  }, 1000);
+});
+$("sStepBtn").addEventListener("click", async () => { if (!SM.busy) sRender(await api("/api/step", {})); });
+$("sRestartBtn").addEventListener("click", () => { if (SM.lastGoal !== null && !SM.busy) sStart(SM.lastGoal); });
+$("sOverBtn").addEventListener("click", () => {
+  sStopPlay();
+  ["sGoalSec", "sPlaySec", "sResultSec"].forEach(id => $(id).classList.add("disabled"));
+  document.querySelectorAll("#sWorlds .card").forEach(x => x.style.borderColor = "");
+  $("sWorlds").scrollIntoView({behavior: "smooth"});
+});
+
+async function sAsk(a){
+  sStopPlay();
+  SM.busy = true;
+  document.querySelectorAll(".sFoil, #sStepBtn, #sPlayBtn, #sRestartBtn").forEach(b => b.disabled = true);
+  $("sResultSec").classList.remove("disabled");
+  $("sShowWrap").innerHTML = "";
+  $("sAnswer").innerHTML = `<div class="note"><span class="spinner"></span>🤔 Thinking really hard about your question… this can take up to a minute.</div>`;
+  $("sResultSec").scrollIntoView({behavior: "smooth"});
+  try {
+    const r = await api("/api/cf", {method: "zoo", a_foil: a, settings: {}});
+    const paras = (r.explanation_simple || []).map(s => `<p style="margin:8px 0;font-size:15px">${esc(s)}</p>`).join("");
+    if (r.success) {
+      $("sAnswer").innerHTML = `<div class="banner ok"><b>💡 Here is what would have changed its mind:</b>${paras}</div>
+        <div class="controls"><button class="green" id="sShowBtn">🎬 Show me!</button><span class="note">watch the agent actually do it</span></div>`;
+      $("sShowBtn").addEventListener("click", sShow);
+    } else {
+      $("sAnswer").innerHTML = `<div class="banner warn"><b>🚫 Nothing would make it do that here.</b>${paras}</div>`;
+    }
+  } catch (err) {
+    $("sAnswer").innerHTML = `<div class="banner bad">Something went wrong — please try again.</div>`;
+  } finally {
+    SM.busy = false;
+    try { sRender(await api("/api/state")); } catch (e) {}
+  }
+}
+
+async function sShow(){
+  $("sShowBtn").disabled = true;
+  $("sShowWrap").innerHTML = `<div class="note" style="margin-top:10px"><span class="spinner"></span>rehearsing the alternative future…</div>`;
+  try {
+    const c = await api("/api/continue", {});
+    const steps = c.steps || [];
+    let msg;
+    if (!c.winner) msg = "It couldn't act your wish out from here.";
+    else if (c.reverted_to_original) msg = "It performed your move — but then drifted back to its original plan and the same ending. Your wish changed the moment, not the story.";
+    else if (c.on_front) msg = "✅ It performed your move and still finished with a sensible outcome — a genuinely different story.";
+    else msg = "It performed your move, but afterwards it couldn't reach any of the endings it knows are good.";
+    if (!steps.length) { $("sShowWrap").innerHTML = `<div style="font-size:15px;margin-top:10px">${esc(msg)}</div>`; return; }
+    $("sShowWrap").innerHTML = `<div style="margin-top:12px">
+      <img id="sShowImg" style="width:640px;max-width:100%;border-radius:10px;border:1px solid var(--line)">
+      <div class="note" id="sShowCap" style="margin-top:6px"></div>
+      <div id="sShowMsg" style="display:none;font-size:15px;margin-top:8px">${esc(msg)}</div></div>`;
+    let i = 0;
+    const tick = () => {
+      if (i >= steps.length) { $("sShowMsg").style.display = ""; $("sShowCap").textContent = "…and that is the alternative story."; return; }
+      const s2 = steps[i++];
+      if (s2.frame) $("sShowImg").src = "data:image/png;base64," + s2.frame;
+      $("sShowCap").textContent = `the agent goes: ${s2.label}`;
+      setTimeout(tick, 900);
+    };
+    tick();
+  } catch (err) {
+    $("sShowWrap").innerHTML = `<div class="banner bad">Could not act it out — please try again.</div>`;
+  }
+}
+
+initModels();
+</script>
+</body>
+</html>

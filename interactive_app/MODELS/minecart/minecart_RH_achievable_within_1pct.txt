@@ -1,0 +1,30 @@
+# minecart [RH] - empirically searched commands delivered FAITHFULLY within 1%
+# criterion: ||(desired_command - achieved_return) / objective_range||_2 <= 0.01; horizon excluded
+# protocol: greedy singleton verification on cuda, reset seed 0, clip(rem - r, None, max_return), horizon = max(h-1, 1), integer initial horizon 1..1000
+# search: 3663 batched CPU discovery rollouts / 214884 env steps; 1122 singleton CUDA archive rollouts / 134693 env steps
+# archive: 1122 normally ended valid commands, 743 unique achieved outcomes; unfaithful outcomes included in dominance audit
+# RH tie-break: closest initial horizon to max(actual singleton rollout length - 2, 1), then smallest normalized return error
+# final: 20 unique rows, each reparsed then rerun twice (40 rollouts / 856 env steps); worst normalized error 0.000899999142
+# achieved column is exactly non-dominated (maximisation) against the complete singleton search archive
+# checkpoint_sha256: 72abe4d764f4a1407c5995ddd1f9de7ff5f406425887dba5def079423dc65643
+# desired_command_0,desired_command_1,desired_command_2,desired_horizon,achieved_return_0,achieved_return_1,achieved_return_2
+0,0,-0.3,10,0,0,-0.3
+0,0.8,-0.7399999,17,0,0.8,-0.7399999
+0,1.5,-0.9599999,18,0,1.5,-0.9599999
+0.28,1.22,-1.1399999,22,0.28,1.22,-1.1399999
+0.4,0.6,-0.7799999,19,0.4,0.6,-0.7799999
+0.4,1.1,-1.1399999,22,0.4,1.1,-1.1399999
+0.42,1.08,-1.1999998,25,0.42,1.08,-1.1999998
+0.6,0.4,-0.7799999,19,0.6,0.4,-0.7799999
+0.6,0.9,-0.9999999,20,0.6,0.9,-0.9999999
+0.65,0.85,-1.2999997,37,0.65,0.85,-1.2999997
+0.7,0.8,-1.1799998,24,0.7,0.8,-1.1799998
+0.75,0.75,-0.8599999,23,0.75,0.75,-0.8599999
+0.8,0,-0.7399999,17,0.8,0,-0.7399999
+0.8,0.7,-1.1799998,24,0.8,0.7,-1.1799998
+0.85,0.65,-1.2,34,0.85,0.65,-1.3799999
+0.9,0.6,-0.9999999,20,0.9,0.6,-0.9999999
+1.1,0.4,-1.1599998,23,1.1,0.4,-1.1599998
+1.15,0.35,-1.2199998,26,1.15,0.35,-1.2199998
+1.22,0.28,-1.1399999,22,1.22,0.28,-1.1399999
+1.5,0,-0.9599999,18,1.5,0,-0.9599999

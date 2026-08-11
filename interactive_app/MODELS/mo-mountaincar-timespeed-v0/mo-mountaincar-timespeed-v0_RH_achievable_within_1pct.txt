@@ -1,0 +1,37 @@
+# mo-mountaincar-timespeed-v0 [RH] - commands verified faithful within 1%
+# criterion: ||(desired_command - achieved_return) / objective_range||_2 <= 0.01
+# protocol: deterministic greedy argmax with current action masks, reset seed 0, float32 rewards, clip(rem - r, None, max_return)
+# RH protocol/domain: horizon = max(h-1, 1), issued horizon is an integer in [1, 200]; for duplicate outputs choose horizon closest to max(singleton_rollout_length-2, 1), then lower return error
+# deep search: 3530 fresh valid-domain rollouts, 550000 environment steps; artifacts + direct commands + line projection + inverse local search + fixed-point closure + random/local exploration + scalarized dominance challenge
+# archive: 1894 unique valid normal-end outcomes; saved achieved returns are exact maximization-nondominated against the entire discovered archive
+# verification: every serialized saved command was freshly rerun twice (58 verification rollouts, 7760 steps; 0 preliminary candidates dropped); max saved normalized error 0.0098000154
+# desired_command_0,desired_command_1,desired_horizon,achieved_return_0,achieved_return_1
+-197.379,86.6182,198,-197,85.82561
+-197,85.8256,197,-196,85.31122
+-170.50671,76.00002,170,-170,75.23459
+-170,76.55417,172,-169,75.11917
+-143.73192,68.03277,144,-143,66.12364
+-142.4487,67.586754,143,-142,65.583405
+-141.4527,66.99614,142,-141,64.99379
+-140.46086,66.39355,141,-140,64.39325
+-138,64.75838,139,-138,63.090965
+-137,63.145744,138,-137,62.35843
+-136,63.725502,138,-136,61.667503
+-134.55397,62.19107,137,-135,60.898056
+-133,61.5813,135,-134,60.072456
+-131.6237,59.835938,134,-133,59.19212
+-131,58.846,131,-132,58.283306
+-130.3307,57.58513,132,-131,57.327114
+-130,55.9751,131,-130,55.97505
+-127.33962,54.531685,130,-129,54.884212
+-128,53.619923,130,-128,53.619923
+-125.20059,51.533035,128,-127,51.967793
+-124.86145,49.041443,124,-126,49.124794
+-111.635,39.5712,113,-111,38.10019
+-110.07858,38.90345,110,-109,37.254322
+-107.5,37.933395,108,-107,36.32568
+-105,35.174698,105,-104,34.55549
+-104,34.4653,104,-103,33.915302
+-101.866394,33.934715,104,-102,33.051014
+-101,32.138367,102,-101,32.072334
+-99,31.341,97,-100,30.69058

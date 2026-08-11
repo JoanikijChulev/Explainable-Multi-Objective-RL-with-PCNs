@@ -1,0 +1,10 @@
+{
+  "binary_improvements": 1801,
+  "load_errors": [],
+  "output_dir": "output_artifacts/pcn_zoo_cf_evaluations/eval_20260513_115109",
+  "ray_successes": 2480,
+  "success_rate": 0.7662534018748111,
+  "total_cases": 3307,
+  "total_successes": 2534,
+  "zoo_improvements": 1224
+}

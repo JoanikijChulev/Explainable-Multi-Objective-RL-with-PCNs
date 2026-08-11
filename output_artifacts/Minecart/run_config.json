@@ -1,0 +1,27 @@
+{
+  "batch_size": 512,
+  "device": "cuda",
+  "env": "minecart",
+  "gamma": 1.0,
+  "learning_rate": 0.0001,
+  "max_return": [
+    1.5,
+    1.5,
+    -0.0
+  ],
+  "max_size": 1000,
+  "min_learning_rate": 1e-05,
+  "model_source": null,
+  "n_er_episodes": 1000,
+  "n_model_updates": 40,
+  "n_step_episodes": 10,
+  "ref_point": [
+    0.0,
+    0.0,
+    -200.0
+  ],
+  "reward_neutral_suffix_trimming": true,
+  "reward_time_tiebreak_commands": true,
+  "run_name": "Minecart",
+  "total_steps": 30000000
+}

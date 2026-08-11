@@ -1,0 +1,11 @@
+# resource-gathering-v0 [RH] - empirically searched commands delivered FAITHFULLY within 1%
+# criterion: ||(desired_command - achieved_return) / objective_range||_2 <= 0.01; horizon excluded
+# protocol: greedy singleton verification on cuda, reset seed 0, clip(rem - r, None, max_return), horizon = max(h-1, 1), integer initial horizon 1..100
+# search: 100 batched CPU discovery rollouts / 5391 env steps; 8 singleton CUDA archive rollouts / 81 env steps
+# archive: 8 normally ended valid commands, 4 unique achieved outcomes; unfaithful outcomes included in dominance audit
+# RH tie-break: closest initial horizon to max(actual singleton rollout length - 2, 1), then smallest normalized return error
+# final: 1 unique rows, each reparsed then rerun twice (2 rollouts / 24 env steps); worst normalized error 0
+# achieved column is exactly non-dominated (maximisation) against the complete singleton search archive
+# checkpoint_sha256: f7cdd7d4f3828c87f3a1672e7af2354875d824620c5ff79e80f0c519c2780ea9
+# desired_command_0,desired_command_1,desired_command_2,desired_horizon,achieved_return_0,achieved_return_1,achieved_return_2
+0,1,1,12,0,1,1

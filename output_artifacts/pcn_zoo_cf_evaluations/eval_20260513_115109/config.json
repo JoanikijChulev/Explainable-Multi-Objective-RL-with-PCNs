@@ -1,0 +1,31 @@
+{
+  "checkpoint": null,
+  "device": "cuda",
+  "foil_top_k": null,
+  "max_cases": null,
+  "max_fronts": null,
+  "max_timesteps": null,
+  "output_dir": "output_artifacts/pcn_zoo_cf_evaluations/eval_20260513_115109",
+  "runs": [
+    "bb",
+    "bp",
+    "c2",
+    "dst",
+    "ft",
+    "Minecart",
+    "reward_line",
+    "rsg2",
+    "three_tree"
+  ],
+  "settings": {
+    "c": 1.0,
+    "clip_command": true,
+    "finite_diff_h": 0.001,
+    "learning_rate": 0.01,
+    "line_search_steps": 16,
+    "margin": 0.05,
+    "max_queries": 9001,
+    "random_directions": 9001,
+    "seed": 0
+  }
+}

@@ -1,0 +1,21 @@
+# mo-lunar-lander-v3 [RH] - successful-landing commands faithful within 1%
+# ordering: physical landing success filter first, then exact maximization nondominance within the successful-outcome archive
+# landing success: terminated with objective_0=+100, sleeping lander, game_over=false; crashes and timeouts excluded before dominance
+# criterion: ||(desired_command-achieved_return)/[200,800,1000,1000]||_2 <= 0.01; horizon excluded
+# RH tie-break: issued horizon closest to max(actual landing rollout length-2,1), then lower normalized return error
+# deep search: 44320 unique batched rollouts / 9036316 environment steps; artifact, interpolation, global, fixed-point, horizon, local, convex, and ND-challenge stages
+# successful archive: 15491 unique landing outcomes; exact successful-only ND size 36; unfaithful successful outcomes included in dominance
+# final: 11 unique successful ND rows; each serialized command rerun twice / 5640 verification steps; worst normalized error 0.009432509986
+# checkpoint_sha256: 8869a1e393c6d75e3a34cc0004e4a949aadc4a8e1d3c9723812ecf1ba33d2005
+# desired_command_0,desired_command_1,desired_command_2,desired_command_3,desired_horizon,achieved_return_0,achieved_return_1,achieved_return_2,achieved_return_3
+100,219.216995,-51.7635002,0,350,100,224.321732,-50,0
+100,229.980835,-52.9791679,-13.020833,175,100,228.058411,-53,-13
+99.6865997,225.6315,-54.0688477,0,225,100,228.117416,-54,0
+100,226.271622,-57.2257614,-3.04524803,259,100,232.153717,-57,-3
+100,228.614334,-66.3040695,0,225,100,233.55687,-66,0
+100,231.167648,-59.25,-3,285,100,233.589035,-59,-3
+100,234.007935,-63,-3,313,100,238.529556,-63,-3
+99.0569916,232.199707,-99.2076111,-14.4485865,242,100,238.723328,-99,-14
+100,236.508453,-65.0510864,-25.6971207,193,100,238.763,-65,-26
+100,235.099121,-79.9546661,-56.1659203,245,100,238.773056,-80,-56
+99.75,236.836243,-97.9911346,-33.040657,233,100,238.791702,-98,-33

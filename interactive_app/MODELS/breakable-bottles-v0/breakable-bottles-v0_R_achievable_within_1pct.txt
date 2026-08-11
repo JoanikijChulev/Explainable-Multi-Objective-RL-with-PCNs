@@ -1,0 +1,10 @@
+# breakable-bottles-v0 [R] - empirically searched commands delivered FAITHFULLY within 1%
+# criterion: ||(desired_command - achieved_return) / objective_range||_2 <= 0.01; horizon excluded
+# protocol: greedy singleton verification on cuda, reset seed 1, clip(rem - r, None, max_return)
+# search: 1 batched CPU discovery rollouts / 10 env steps; 1 singleton CUDA archive rollouts / 10 env steps
+# archive: 1 normally ended valid commands, 1 unique achieved outcomes; unfaithful outcomes included in dominance audit
+# final: 1 unique rows, each reparsed then rerun twice (2 rollouts / 20 env steps); worst normalized error 0
+# achieved column is exactly non-dominated (maximisation) against the complete singleton search archive
+# checkpoint_sha256: d2e93f9cf286850e3ebba0084449c3c0afe70cb08eab77bc580ac90270b8ada8
+# desired_command_0,desired_command_1,desired_command_2,achieved_return_0,achieved_return_1,achieved_return_2
+-10,50,0,-10,50,0

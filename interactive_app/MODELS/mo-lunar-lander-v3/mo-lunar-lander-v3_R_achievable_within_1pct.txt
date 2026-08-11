@@ -1,0 +1,25 @@
+# mo-lunar-lander-v3 [R] - successful-landing commands faithful within 1%
+# ordering: physical landing success filter first, then exact maximization nondominance within the successful-outcome archive
+# landing success: terminated with objective_0=+100, sleeping lander, game_over=false; crashes and timeouts excluded before dominance
+# criterion: ||(desired_command-achieved_return)/[200,800,1000,1000]||_2 <= 0.01
+# deep search: 33264 unique batched rollouts / 7686204 environment steps; artifact, interpolation, global, fixed-point, local, convex, and ND-challenge stages
+# successful archive: 10826 unique landing outcomes; exact successful-only ND size 71; unfaithful successful outcomes included in dominance
+# final: 16 unique successful ND rows; each serialized command rerun twice / 7478 verification steps; worst normalized error 0.00991434864137
+# checkpoint_sha256: 5a9477195007c261df90003a4ff22e208b112e184f7eef8f8c6147ce60bbd322
+# desired_command_0,desired_command_1,desired_command_2,desired_command_3,achieved_return_0,achieved_return_1,achieved_return_2,achieved_return_3
+100,214.100281,-51,-3,100,216.753998,-51,-3
+100,217.502838,-52.1885376,-3.06991386,100,220.029007,-52,-3
+100,217.538559,-52.2482681,-3.0960207,100,221.20459,-53,-3
+100,223.690201,-61.5527687,0,100,221.905075,-54,0
+100,227.094452,-64.3768463,-4.47181177,100,226.718552,-65,-4
+99.6605148,218.997223,-60.0438919,-5.36327028,100,226.806107,-60,-5
+99.3439178,222.633469,-68.1028137,-2.89544201,100,226.89444,-67,-3
+100,224.442169,-70.1353607,-3.4252305,100,227.136566,-69,-3
+100,227.554428,-66.4351044,-4.25083113,100,227.496185,-67,-4
+100,230.712494,-77.9172058,-4,100,227.914368,-77,-4
+100,226.41011,-61.46492,-5.26754093,100,228.301163,-62,-5
+100,224.931595,-53.2806091,-7.86862278,100,228.432129,-54,-8
+100,231.808411,-61,-13,100,231.808411,-61,-13
+100,239.76236,-59.6423111,-19.6553326,100,238.293671,-60,-19
+99.6009445,231.854401,-66.0195847,-10.727087,100,238.358658,-66,-11
+100,239.097565,-72.5708771,-54.0627747,100,238.516251,-65,-50

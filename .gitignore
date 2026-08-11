@@ -1,0 +1,35 @@
+# Python bytecode and test/tool caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local Python environments and secrets
+.venv/
+venv/
+env/
+.env
+.env.*
+!.env.example
+
+# Local application, editor, and agent state
+.art/
+.claude/
+.vscode/
+.idea/
+interactive_app/reports/
+interactive_app/MODELS/custom/
+
+# Temporary and operating-system files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini

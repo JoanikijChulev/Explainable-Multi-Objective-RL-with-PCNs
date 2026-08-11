@@ -1,0 +1,21 @@
+# reward-line [RH] - empirically searched commands delivered FAITHFULLY within 1%
+# criterion: ||(desired_command - achieved_return) / objective_range||_2 <= 0.01; horizon excluded
+# protocol: greedy singleton verification on cuda, reset seed 0, clip(rem - r, None, max_return), horizon = max(h-1, 1), integer initial horizon 1..20
+# search: 7442 batched CPU discovery rollouts / 81345 env steps; 35 singleton CUDA archive rollouts / 243 env steps
+# archive: 35 normally ended valid commands, 11 unique achieved outcomes; unfaithful outcomes included in dominance audit
+# RH tie-break: closest initial horizon to max(actual singleton rollout length - 2, 1), then smallest normalized return error
+# final: 11 unique rows, each reparsed then rerun twice (22 rollouts / 148 env steps); worst normalized error 1.49011612e-08
+# achieved column is exactly non-dominated (maximisation) against the complete singleton search archive
+# checkpoint_sha256: 58556751d1761572b0cd85d168aaf9142558de4e5e306c68d34abbe6f0e64093
+# desired_command_0,desired_command_1,desired_horizon,achieved_return_0,achieved_return_1
+0,1,9,0,1
+0.100000024,0.9,8,0.100000024,0.9
+0.2,0.8,7,0.19999999,0.8
+0.3,0.7,6,0.3,0.7
+0.39999998,0.6,5,0.39999998,0.6
+0.5,0.5,4,0.5,0.5
+0.6,0.4,5,0.6,0.4
+0.7,0.3,6,0.7,0.3
+0.8,0.2,7,0.8,0.2
+0.9,0.1,8,0.9,0.1
+1,0,9,1,0

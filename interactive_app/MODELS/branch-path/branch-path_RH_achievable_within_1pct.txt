@@ -1,0 +1,12 @@
+# branch-path [RH] - empirically searched commands delivered FAITHFULLY within 1%
+# criterion: ||(desired_command - achieved_return) / objective_range||_2 <= 0.01; horizon excluded
+# protocol: greedy singleton verification on cuda, reset seed 0, clip(rem - r, None, max_return), horizon = max(h-1, 1), integer initial horizon 1..13
+# search: 39 batched CPU discovery rollouts / 507 env steps; 7 singleton CUDA archive rollouts / 91 env steps
+# archive: 7 normally ended valid commands, 4 unique achieved outcomes; unfaithful outcomes included in dominance audit
+# final: 3 unique rows, each reparsed then rerun twice (6 rollouts / 78 env steps); worst normalized error 0
+# achieved column is exactly non-dominated (maximisation) against the complete singleton search archive
+# checkpoint_sha256: 67f015a91915f55239c284d0772a4bef701dbebdde1c9529033d0554022ed8fb
+# desired_command_0,desired_command_1,desired_horizon,achieved_return_0,achieved_return_1
+1,3,13,1,3
+2,2,13,2,2
+3,1,13,3,1

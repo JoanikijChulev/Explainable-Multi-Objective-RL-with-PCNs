@@ -1,0 +1,19 @@
+# dst [R] - empirically searched commands delivered FAITHFULLY within 1%
+# criterion: ||(desired_command - achieved_return) / objective_range||_2 <= 0.01; horizon excluded
+# protocol: greedy singleton verification on cuda, reset seed 0, clip(rem - r, None, max_return)
+# search: 10 batched CPU discovery rollouts / 96 env steps; 10 singleton CUDA archive rollouts / 96 env steps
+# archive: 10 normally ended valid commands, 10 unique achieved outcomes; unfaithful outcomes included in dominance audit
+# final: 10 unique rows, each reparsed then rerun twice (20 rollouts / 192 env steps); worst normalized error 0
+# achieved column is exactly non-dominated (maximisation) against the complete singleton search archive
+# checkpoint_sha256: 3bd47c2229d59dac63f713b700a6f8758990adfcffa8f35c88183e5190dba911
+# desired_command_0,desired_command_1,achieved_return_0,achieved_return_1
+1,-1,1,-1
+2,-3,2,-3
+3,-5,3,-5
+5,-7,5,-7
+8,-8,8,-8
+16,-9,16,-9
+24,-13,24,-13
+50,-14,50,-14
+74,-17,74,-17
+124,-19,124,-19

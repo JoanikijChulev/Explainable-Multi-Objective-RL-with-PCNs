@@ -1,0 +1,23 @@
+# three-tree [R] - empirically searched commands delivered FAITHFULLY within 1%
+# criterion: ||(desired_command - achieved_return) / objective_range||_2 <= 0.01; horizon excluded
+# protocol: greedy singleton verification on cuda, reset seed 0, clip(rem - r, None, max_return)
+# search: 32 batched CPU discovery rollouts / 128 env steps; 23 singleton CUDA archive rollouts / 92 env steps
+# archive: 23 normally ended valid commands, 14 unique achieved outcomes; unfaithful outcomes included in dominance audit
+# final: 14 unique rows, each reparsed then rerun twice (28 rollouts / 112 env steps); worst normalized error 0
+# achieved column is exactly non-dominated (maximisation) against the complete singleton search archive
+# checkpoint_sha256: 1b450c6faf24b83c0e0b533d1c1b9ec4ab4736d5558c89785ce97fe264e45795
+# desired_command_0,desired_command_1,desired_command_2,achieved_return_0,achieved_return_1,achieved_return_2
+0.35,0.3,3.8,0.35,0.3,3.8
+0.35,1.0500001,3.15,0.35,1.0500001,3.15
+0.35,1.2,2.8999999,0.35,1.2,2.8999999
+0.35,2.25,1.95,0.35,2.25,1.95
+0.35,3.15,1.0500001,0.35,3.15,1.0500001
+0.35,3.8,0.3,0.35,3.8,0.3
+1.1500001,2.55,1.7,1.1500001,2.55,1.7
+1.1500001,2.6,1.65,1.1500001,2.6,1.65
+1.65,0.4,3.25,1.65,0.4,3.25
+1.65,3.25,0.4,1.65,3.25,0.4
+1.6999999,2.4,1.5999999,1.6999999,2.4,1.5999999
+3.3999999,2.9499998,1.45,3.3999999,2.9499998,1.45
+3.45,2.1,2.65,3.45,2.1,2.65
+4.3,2.05,1.45,4.3,2.05,1.45
